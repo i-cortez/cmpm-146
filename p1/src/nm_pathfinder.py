@@ -44,7 +44,7 @@ def find_path (source_point, destination_point, mesh):
     else:
         detail_points[endpoint_boxes[0]] = [source_point[1], source_point[0]]
         detail_points[endpoint_boxes[1]] = [destination_point[1], destination_point[0]]
-        queue = [endpoint_boxes[0]]
+        queue = [endpoint_boxes[0]] 
         parent = {endpoint_boxes[0]: None}
         while queue:
             current_box = queue.pop(0)
@@ -106,12 +106,19 @@ def find_path (source_point, destination_point, mesh):
 
     #print("DETAIL POINTS:", detail_points)
     
+    
     detail_points[endpoint_boxes[1]] = [destination_point[1],destination_point[0]]
     if len(detail_points) == 1:
-        print([source_point[1],source_point[0]])
-        print([destination_point[1],destination_point[0]])
+        print([source_point[0],source_point[1]])
+        print([destination_point[0],destination_point[1]])
+    index = 0
     for box in box_path:
         print(detail_points[box])
+        path.append(detail_points[box][::-1]) 
+        index += 1
 
+   # path.append([source_point[0], source_point[1]])
+   # path.append([destination_point[0], destination_point[1]])
+    print("path", path)
     #print(path, endpoint_boxes)
     return path, endpoint_boxes
