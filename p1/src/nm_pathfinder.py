@@ -25,13 +25,13 @@ def find_path (source_point, destination_point, mesh):
     print("destination point", destination_point)
     #print(mesh['adj'])
     for box in mesh['boxes']:
-
         if source_point[0] <= box[1] and source_point[0] >= box[0] and source_point[1] >= box[2] and \
            source_point[1] <= box[3]:
                 endpoint_boxes.insert(0,box)
         if destination_point[0] <= box[1] and destination_point[0] >= box[0] and destination_point[1] >= box[2] and \
              destination_point[1] <= box[3]:
                 endpoint_boxes.insert(1,box)
+
     
     # Start breadth first search
     queue = None
@@ -120,5 +120,7 @@ def find_path (source_point, destination_point, mesh):
    # path.append([source_point[0], source_point[1]])
    # path.append([destination_point[0], destination_point[1]])
     print("path", path)
+    print("endpoint_boxes", endpoint_boxes)
     #print(path, endpoint_boxes)
     return path, endpoint_boxes
+

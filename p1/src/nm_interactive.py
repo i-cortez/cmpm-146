@@ -35,7 +35,6 @@ destination_point = None
 visited_boxes = []
 path = []
 
-
 def redraw():
 
     canvas.delete(tkinter.ALL)
