@@ -87,28 +87,81 @@ def find_path (source_point, destination_point, mesh):
                 if next_box not in prev:
                     prev.update({next_box: current[0]})
                     # Calculate the next point to move to
-                    next_point = get_dest_point(next_box, current[0])
+                    
+                    #print("Path",path)
+                    #print("Detail points", detail_points)
+                    #print("boxes", boxes)
+
+                    next_point = get_dest_point(next_box, current[0], detail_points)
                     current_point = detail_points[current[0]]
                     distance = dist[current_point] + get_distance(current_point, next_point)
                     detail_points.update({next_box: next_point})
                     dist.update({next_point: distance})
                     boxes.append(current[0])
                     heappush(queue, (next_box, distance))
+                else:
+                    current_point = detail_points[current[0]]
+                    next_point = detail_points[next_box]
+                    distance = dist[current_point] + get_distance(current_point, next_point)
+                    if distance < dist[next_point]:
+                        dist.update({next_box: distance})
+                        prev[next_box] = current[0]
+                        heappush(queue,(next_box, distance))
+
+                
     return None, None
 
 def get_distance(a, b):
     return sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
-def get_dest_point(a, b):
+def get_dest_point(a, b, box_points):
     x1 = max(a[0], b[0])
     x2 = min(a[1], b[1])
     y1 = max(a[2], b[2])
     y2 = min(a[3], b[3])
 
+    
+    start_point = box_points[b]
+    px = start_point[0]
+    py = start_point[1]
+
+    #if x1 <= px <= x2:
+
+    if px < x1:  #if src x < b2x1
+        if py >= y1 and py <= y2:  # if src y in between b2y1 and b2y2
+            x = x1
+            y = py
+        elif py < y1:
+            x = x1
+            y = y1
+        else:
+            x = x1
+            y = y2
+
+    elif px >= x1 and px <= x2:    #if b2x1 <= px <= b2x2
+        x = px
+        y = y1
+        
+    else:
+        if py >= y1 and py <= y2:  # if src y in between b2y1 and b2y2
+            x = x2
+            y = py
+        elif py < y1:
+            x = x2
+            y = y1
+        else:
+            x = x2
+            y = y2
+
+    #x = box_points[b][0]
+    #y = box_points[b][1]
+    
+    """
     if x1 < x2: x = x1
     else: x = x2
     if y1 < y2: y = y1
     else: y = y2
+    """
 
     return (x,y)
 
