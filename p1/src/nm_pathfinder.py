@@ -74,8 +74,8 @@ def find_path (source_point, destination_point, mesh):
     detail_points.update({source_box: source_point})
     detail_points.update({destination_box: destination_point})
 
-    heappush(queue, (heuristic, source_box, 'destination'))      ###############
-    heappush(queue, (heuristic, destination_box, 'source'))
+    heappush(queue, (0, source_box, 'destination'))      ###############
+    heappush(queue, (0, destination_box, 'source'))
 
     #print("queue", queue)
     while queue:
@@ -87,15 +87,19 @@ def find_path (source_point, destination_point, mesh):
             boxes.append(current[1])           ###############
                 
             box = current[1]
-            while box:
-                path.insert(0,detail_points[box])
+            while box is not source_box:
+                path.append(detail_points[box]) #path.insert(0, detail_points[box])
                 box = forward_prev[box]
-                print("out of first loop")   
+                print("out of first loop")  
+            path.append(source_point)
+            path.reverse() 
 
             box = backward_prev[current[1]]
             while box:
                 path.append(detail_points[box])
                 box = backward_prev[box]
+                print("out of second loop")
+            print("path", path)
             return path, boxes
         
         else:
@@ -113,26 +117,28 @@ def find_path (source_point, destination_point, mesh):
                         next_point = get_dest_point(next_box, current[1], detail_points)    ###############
                         current_point = detail_points.get(current[1])
                         distance = forward_dist.get(current_point) + get_distance(current_point, next_point)
-                        if distance < current[0]:
-                            heuristic = get_distance(next_point, destination_point)
-                            forward_prev.update({next_box: current[1]})
-                            forward_dist.update({next_point: distance})
-                            detail_points.update({next_box: next_point})
-                            boxes.append(current[1])      ###############
-                            heappush(queue, (distance + heuristic, next_box, 'destination'))      ###############
+                        #if distance < current[0]:
+                        heuristic = get_distance(next_point, destination_point)
+                        forward_prev.update({next_box: current[1]})
+                        forward_dist.update({next_point: distance})
+                        detail_points.update({next_box: next_point})
+                        boxes.append(current[1])      ###############
+                        heappush(queue, (distance + heuristic, next_box, 'destination'))      ###############
 
                 elif current[2] == 'source':
                     if next_box not in backward_prev: 
                         next_point = get_dest_point(next_box, current[1], detail_points)    ###############
                         current_point = detail_points.get(current[1])
+                        print("backwards_dist", backward_dist)
+                        print("current point", current_point)
                         distance = backward_dist.get(current_point) + get_distance(current_point, next_point)
-                        if distance < current[0]:
-                            heuristic = get_distance(next_point, source_point)
-                            backward_prev.update({next_box: current[1]})
-                            backward_dist.update({next_point: distance})
-                            detail_points.update({next_box: next_point})
-                            boxes.append(current[1])      ###############
-                            heappush(queue, (distance + heuristic, next_box, 'source'))      ###############
+                        #if distance < current[0]:
+                        heuristic = get_distance(next_point, source_point)
+                        backward_prev.update({next_box: current[1]})
+                        backward_dist.update({next_point: distance})
+                        detail_points.update({next_box: next_point})
+                        boxes.append(current[1])      ###############
+                        heappush(queue, (distance + heuristic, next_box, 'source'))      ###############
                     
                 
     return None, None
@@ -179,15 +185,6 @@ def get_dest_point(a, b, box_points):
             x = x2
             y = y2
 
-    #x = box_points[b][0]
-    #y = box_points[b][1]
-    
-    """
-    if x1 < x2: x = x1
-    else: x = x2
-    if y1 < y2: y = y1
-    else: y = y2
-    """
 
     return (x,y)
 
