@@ -32,26 +32,20 @@ def find_path (source_point, destination_point, mesh):
         if box[0] <= source_point[0] <= box[1] and box[2] <= source_point[1] <= box[3]:
             source_box = box
             boxes.insert(0, source_box)
-            print("source point: ", source_point)
-            print("source box: ", source_box)
         # Check if the destinatin point is within bounds of the current box
         if source_point != destination_point and box[0] <= destination_point[0] <= box[1] and box[2] <= destination_point[1] <= box[3]:
             destination_box = box
-            print("destination point: ", destination_point)
-            print("destination box: ", destination_box)
+            boxes.append(destination_box)
     
     # Verify that the boxes are valid
-    #"""
     if source_box is None or destination_box is None:
         print("invalid box coordinates: no path found")
         return None, None
-    #"""   
     
     # Verify that the source and destination points are not in the same box
     if source_box == destination_box:
         path.append(source_point)
         path.append(destination_point)
-        boxes.append(destination_box)
         return path, boxes
 
     # Begin Dijkstra's Forward Search
@@ -83,11 +77,10 @@ def find_path (source_point, destination_point, mesh):
         
         #If path on its way to destination
         if (current[2] == 'destination' and current[1] in backward_prev) or (current[1] == 'source' and current[1] in forward_prev):
-            print("found meet point")
             boxes.append(current[1])           ###############
                 
             box = current[1]
-            while box is not source_box:
+            while box != source_box:
                 path.append(detail_points[box]) #path.insert(0, detail_points[box])
                 box = forward_prev[box]  
             path.append(source_point)
@@ -98,7 +91,6 @@ def find_path (source_point, destination_point, mesh):
                 path.append(detail_points[box])
                 box = backward_prev[box]
             path.append(destination_point)
-            print("path", path)
             return path, boxes
         
         else:
@@ -108,10 +100,6 @@ def find_path (source_point, destination_point, mesh):
                     if next_box not in forward_prev:  
                         #prev.update({next_box: current[1]})    ###############
                         # Calculate the next point to move to
-                        
-                        #print("Path",path)
-                        #print("Detail points", detail_points)
-                        #print("boxes", boxes)
 
                         next_point = get_dest_point(next_box, current[1], detail_points)    ###############
                         current_point = detail_points.get(current[1])
@@ -129,16 +117,12 @@ def find_path (source_point, destination_point, mesh):
                         next_point = get_dest_point(next_box, current[1], detail_points)    ###############
                         
                         current_point = detail_points.get(current[1])
-                        #print("backwards_dist", backward_dist)
-                        #print("current point", current_point)
                         if backward_dist.get(current_point) is None:
                             distance = get_distance(current_point, next_point)
                         else:
                             distance = backward_dist.get(current_point) + get_distance(current_point, next_point)
                         #if distance < current[0]:
                         heuristic = get_distance(next_point, source_point)
-                        print("next box", next_box)
-                        print("next point", next_point)
                         backward_prev.update({next_box: current[1]})
                         backward_dist.update({next_point: distance})
                         detail_points.update({next_box: next_point})
@@ -146,7 +130,7 @@ def find_path (source_point, destination_point, mesh):
                         heappush(queue, (distance + heuristic, next_box, 'source'))      ###############
                     
                 
-    return None, None
+    return path, boxes
 
 def get_distance(a, b):
     return sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
