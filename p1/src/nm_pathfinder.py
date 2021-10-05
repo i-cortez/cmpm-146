@@ -89,16 +89,15 @@ def find_path (source_point, destination_point, mesh):
             box = current[1]
             while box is not source_box:
                 path.append(detail_points[box]) #path.insert(0, detail_points[box])
-                box = forward_prev[box]
-                print("out of first loop")  
+                box = forward_prev[box]  
             path.append(source_point)
             path.reverse() 
 
             box = backward_prev[current[1]]
-            while box:
+            while box != destination_box:
                 path.append(detail_points[box])
                 box = backward_prev[box]
-                print("out of second loop")
+            path.append(destination_point)
             print("path", path)
             return path, boxes
         
@@ -128,12 +127,18 @@ def find_path (source_point, destination_point, mesh):
                 elif current[2] == 'source':
                     if next_box not in backward_prev: 
                         next_point = get_dest_point(next_box, current[1], detail_points)    ###############
+                        
                         current_point = detail_points.get(current[1])
-                        print("backwards_dist", backward_dist)
-                        print("current point", current_point)
-                        distance = backward_dist.get(current_point) + get_distance(current_point, next_point)
+                        #print("backwards_dist", backward_dist)
+                        #print("current point", current_point)
+                        if backward_dist.get(current_point) is None:
+                            distance = get_distance(current_point, next_point)
+                        else:
+                            distance = backward_dist.get(current_point) + get_distance(current_point, next_point)
                         #if distance < current[0]:
                         heuristic = get_distance(next_point, source_point)
+                        print("next box", next_box)
+                        print("next point", next_point)
                         backward_prev.update({next_box: current[1]})
                         backward_dist.update({next_point: distance})
                         detail_points.update({next_box: next_point})
