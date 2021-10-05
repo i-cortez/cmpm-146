@@ -41,9 +41,11 @@ def find_path (source_point, destination_point, mesh):
             print("destination box: ", destination_box)
     
     # Verify that the boxes are valid
-    if source_box == None or destination_box == None:
+    #"""
+    if source_box is None or destination_box is None:
         print("invalid box coordinates: no path found")
         return None, None
+    #"""   
     
     # Verify that the source and destination points are not in the same box
     if source_box == destination_box:
@@ -55,69 +57,83 @@ def find_path (source_point, destination_point, mesh):
     # Begin Dijkstra's Forward Search
     #
     # Maps boxes and the distance to the source box
-    dist = {source_point: 0}
-    # Maps boxes and previous-hop boxes
-    prev = {source_box: None}
-    heuristic = get_distance(source_point, destination_point)
-    dist.update({source_point: 0})
-    # Queue maintains a list of pairs (box, cost to previous)
-    queue = [(heuristic, source_box)]      ###############
-    detail_points.update({source_box: source_point})
-    heappush(queue, (0, source_box))      ###############
+    forward_dist = {source_point: 0}
+    backward_dist = {destination_point: 0}
 
+    # Maps boxes and previous-hop boxes
+    forward_prev = {source_box: None}
+    backward_prev = {destination_box: None}
+
+
+    heuristic = get_distance(source_point, destination_point)
+    forward_dist.update({source_point: 0})
+    backward_dist.update({destination_point: 0})
+    # Queue maintains a list of pairs (box, cost to previous)
+    queue =  [(0, source_box, 'destination'), (0, destination_box, 'source')] #[(heuristic, source_box)]      ###############
+
+    detail_points.update({source_box: source_point})
+    detail_points.update({destination_box: destination_point})
+
+    heappush(queue, (heuristic, source_box, 'destination'))      ###############
+    heappush(queue, (heuristic, destination_box, 'source'))
+
+    #print("queue", queue)
     while queue:
-        current = heappop(queue)
-        # Check if the current box is the destination box
-        if current[1] == destination_box:           ###############
+        current = heappop(queue) #current = (priority, curr_box, curr_goal)
+        
+        #If path on its way to destination
+        if (current[2] == 'destination' and current[1] in backward_prev) or (current[1] == 'source' and current[1] in forward_prev):
+            print("found meet point")
             boxes.append(current[1])           ###############
-            path.append(destination_point)
-            #print("prev list", prev)
-            # Construct the path by iterating through all previous boxes
-            while current[1]:       ###############
-                print("current: ", current[1])        ###############
-                print("previous: ", prev[current[1]])      ###############
-                if prev[current[1]]:      ###############
-                    print("if: ", current[1])    ###############
-                    path.append(detail_points[current[1]])   ###############
-                current = (None, prev[current[1]])     ###############
-            path.append(source_point)
-            path.reverse()
-            #print("path: ", path)
-            #print("boxes: ", boxes)
+                
+            box = current[1]
+            while box:
+                path.insert(0,detail_points[box])
+                box = forward_prev[box]
+                print("out of first loop")   
+
+            box = backward_prev[current[1]]
+            while box:
+                path.append(detail_points[box])
+                box = backward_prev[box]
             return path, boxes
+        
         else:
             for next_box in mesh["adj"][current[1]]:     ###############
-                if next_box not in prev:
-                    #prev.update({next_box: current[1]})    ###############
-                    # Calculate the next point to move to
-                    
-                    #print("Path",path)
-                    #print("Detail points", detail_points)
-                    #print("boxes", boxes)
+                if current[2] == 'destination':
 
-                    next_point = get_dest_point(next_box, current[1], detail_points)    ###############
-                    current_point = detail_points.get(current[1])
-                    distance = dist.get(current_point) + get_distance(current_point, next_point)
-                    if distance < current[0]:
-                        heuristic = get_distance(next_point, destination_point)
-                        prev.update({next_box: current[1]})
-                        dist.update({next_point: distance})
-                        detail_points.update({next_box: next_point})
-                        boxes.append(current[1])      ###############
-                        heappush(queue, (distance + heuristic, next_box))      ###############
-                """"             
-                else:
-                    current_point = detail_points[current[1]]   ###############
-                    next_point = detail_points[next_box]
-                    distance = dist[current_point] + get_distance(current_point, next_point)
-                    if distance < dist[next_point]:
-                        dist.update({next_box: distance})
-                        prev[next_box] = current[1]     ###############
-                        #for box in queue:
-                        #    if box[0] == next_box:
-                        #        box[1] = distance
-                        heappush(queue,(distance, next_box))    ###############
-                """
+                    if next_box not in forward_prev:  
+                        #prev.update({next_box: current[1]})    ###############
+                        # Calculate the next point to move to
+                        
+                        #print("Path",path)
+                        #print("Detail points", detail_points)
+                        #print("boxes", boxes)
+
+                        next_point = get_dest_point(next_box, current[1], detail_points)    ###############
+                        current_point = detail_points.get(current[1])
+                        distance = forward_dist.get(current_point) + get_distance(current_point, next_point)
+                        if distance < current[0]:
+                            heuristic = get_distance(next_point, destination_point)
+                            forward_prev.update({next_box: current[1]})
+                            forward_dist.update({next_point: distance})
+                            detail_points.update({next_box: next_point})
+                            boxes.append(current[1])      ###############
+                            heappush(queue, (distance + heuristic, next_box, 'destination'))      ###############
+
+                elif current[2] == 'source':
+                    if next_box not in backward_prev: 
+                        next_point = get_dest_point(next_box, current[1], detail_points)    ###############
+                        current_point = detail_points.get(current[1])
+                        distance = backward_dist.get(current_point) + get_distance(current_point, next_point)
+                        if distance < current[0]:
+                            heuristic = get_distance(next_point, source_point)
+                            backward_prev.update({next_box: current[1]})
+                            backward_dist.update({next_point: distance})
+                            detail_points.update({next_box: next_point})
+                            boxes.append(current[1])      ###############
+                            heappush(queue, (distance + heuristic, next_box, 'source'))      ###############
+                    
                 
     return None, None
 
