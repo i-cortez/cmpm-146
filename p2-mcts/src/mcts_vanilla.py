@@ -33,8 +33,11 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
 
     """
-    pass
-    # Hint: return new_node
+
+    new_state = board.next_state(state, node.untried_actions[0])
+    new_node = MCTSNode(parent=node, parent_action=node.untried_actions[0], action_list=board.legal_actions(new_state))
+    node.child_nodes.update({node.untried_actions[0]:new_node})
+    return new_node
 
 
 def rollout(board, state):
