@@ -24,21 +24,30 @@ from planet_wars import PlanetWars, finish_turn
 def setup_behavior_tree():
 
     root = Selector(name='Custome strategy')
-    #attack = Action(attack_weakest_enemy_planet)
 
-    attackPlan = Sequence(name='Smother')
+    smother = Sequence(name='Smother')
     canBlitz = Check(blitzable)
     blitzing = Action(blitz)
-    attackPlan.child_nodes = [canBlitz, blitzing]
+    smother.child_nodes = [canBlitz, blitzing]
 
     spread = Sequence(name='efficient spread')
     speadable = Check(spreadConditions)
     spreading = Action(efficientSpread)
     spread.child_nodes = [speadable, spreading]
 
-    defaultMove = Action(spread_to_weakest_neutral_planet)
+    Reinforce = Sequence(name='reinforce')
+    underAttack = Check(underAttackCheck)
+    reinforceA = Action(reinforce)
+    Reinforce.child_nodes = [underAttack, reinforceA]
 
-    root.child_nodes = [defaultMove, attackPlan, spread]
+    utilize = Action(useStockpiles)
+
+    defaultMove = Action(spread_to_weakest_neutral_planet)
+    attack = Action(attack_weakest_enemy_planet)
+
+    root.child_nodes = [Reinforce, spread, smother, utilize, attack, defaultMove]
+    #root.child_nodes = [Reinforce, spread, smother, utilize, attack, defaultMove]
+    #root.child_nodes = [smother, spread, utilize, defaultMove]
     logging.info('\n' + root.tree_to_string())
     return root
 
