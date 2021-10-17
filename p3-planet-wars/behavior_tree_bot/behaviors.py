@@ -41,7 +41,6 @@ def spread_to_weakest_neutral_planet(state):
         return issue_order(state, strongest_planet.ID, weakest_planet.ID, strongest_planet.num_ships / 2)
 
 def blitz(state):
-    return False
     strongest_planet = max(state.my_planets(), key=lambda t: t.num_ships, default=None)
 
     for fleet in state.enemy_fleets():
@@ -62,6 +61,7 @@ def blitz(state):
     
     return issue_order(state, strongest_planet.ID, fleet.destination_planet, units)
 
+"""
 def efficientSpread(state):
     # If there are no neutral planets end the function immediately
     targets = state.neutral_planets()
@@ -79,7 +79,7 @@ def efficientSpread(state):
 
     # Variables
     tuning = [1, 0.2, 0.5]
-    tuning = [1, 0.2, 0.5]
+    tuning = [1, 0.2, 0.8]
     bestPlanet = None
     bestValue = None
 
@@ -124,40 +124,63 @@ def efficientSpread(state):
     if strongest_planet.num_ships < neededUnits or not strongest_planet or not bestPlanet:
         return False
     return issue_order(state, strongest_planet.ID, bestPlanet.ID, neededUnits)
-
 """
+
 def efficientSpread(state):
     strongest_planet = max(state.my_planets(), key=lambda t: t.num_ships, default=None)
+    tuning = [1, 0.2, 0.8]
     myFleets = state.my_fleets()
-    tuning = [1, 0.2, 0.5]
-    bestPlanet = None
-    bestValue = None
+    destination_assigned = False
+    x = 0
+    isEnRoute = False
 
+    # Sort the list of obtained neutral planets
+    # based on value in ascending order
+    targets = state.neutral_planets()
+    valueSorted = []
     for target in targets:
-        routed = False
-        for fleet in myFleets:
-            if fleet.destination_planet == target.ID:
-                routed = True
-                break
-
-        if routed == True:
-            return False
         value = (target.growth_rate*tuning[0]) - (target.num_ships*tuning[1]) - state.distance(strongest_planet.ID, target.ID)*tuning[2]
-        if bestPlanet == None:
-            bestPlanet = target
-            bestValue = value
-        elif value > bestValue:
-            bestValue = value
-            bestPlanet = target
+        valueSorted.append((value, target))
+    valueSorted.sort(key=lambda y: y[0], reverse=True)
 
-    neededUnits = bestPlanet.num_ships + 1
-    if strongest_planet.num_ships < neededUnits or not strongest_planet or not bestPlanet:
+    # Now that the list is sorted, loop through the list of neutral planets
+    # and determine if it is and determine if it is worth dispatching a fleet
+    target = None
+    for target in valueSorted:
+        for fleet in myFleets:
+            if fleet.destination_planet == target[1].ID:
+                isEnRoute = True
+                break
+        if not isEnRoute:
+            break
+    
+    neededUnits = target[1].num_ships + 1
+    #if strongest_planet.num_ships < neededUnits or not strongest_planet or not target[1]:
+        #return False
+    return issue_order(state, strongest_planet.ID, target[1].ID, neededUnits)
+    
+    """
+    while not destination_assigned:
+        if len(myFleets) < 1:
+            destination_assigned = True
+        for fleet in myFleets:
+            if fleet.destination_planet == valueSorted[x][1]:
+                break
+        if x == len(valueSorted) -1:
+            destination_assigned = True
+        else:
+            x = x+1
+
+    planet = valueSorted[0][1].ID
+    #return False
+    neededUnits = planet + 1
+    if strongest_planet.num_ships < neededUnits or not strongest_planet:
         return False
-    return issue_order(state, strongest_planet.ID, bestPlanet.ID, neededUnits)
-"""
+    return issue_order(state, strongest_planet.ID, planet, neededUnits)
+    """
+
 
 def useStockpiles(state):
-    return False
     source = None
     my_planets = iter(sorted(state.my_planets(), key=lambda p: p.num_ships, reverse=True))
     planet = next(my_planets)
@@ -181,7 +204,6 @@ def useStockpiles(state):
     return issue_order(state, source.ID, weakest.ID, source.num_ships/2)
 
 def reinforce(state):
-    return False
     for fleet in state.enemy_fleets():
         for planet in state.my_planets():
             if fleet.destination_planet == planet.ID:
@@ -192,7 +214,7 @@ def reinforce(state):
                 if counter+planet.num_ships > fleet.num_ships:
                         return False
                 strongest_planet = max(state.my_planets(), key=lambda t: t.num_ships, default=None)
-                return issue_order(state, strongest_planet.ID, fleet.destination_planet, fleet.num_ships-planet.num_ships)
+                return issue_order(state, strongest_planet.ID, fleet.destination_planet, fleet.num_ships)
         
     return False
 

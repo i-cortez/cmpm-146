@@ -45,7 +45,8 @@ def setup_behavior_tree():
     defaultMove = Action(spread_to_weakest_neutral_planet)
     attack = Action(attack_weakest_enemy_planet)
 
-    root.child_nodes = [Reinforce, spread, smother, utilize, attack, defaultMove]
+    root.child_nodes = [spread]
+    #root.child_nodes = [Reinforce, spread, smother, utilize, attack, defaultMove]
     #root.child_nodes = [Reinforce, spread, smother, utilize, attack, defaultMove]
     #root.child_nodes = [smother, spread, utilize, defaultMove]
     logging.info('\n' + root.tree_to_string())
