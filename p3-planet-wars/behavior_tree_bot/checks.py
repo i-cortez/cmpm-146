@@ -16,6 +16,26 @@ def have_largest_fleet(state):
 def blitzable(state):
   if len(state.enemy_fleets())<1:
         return False
+  
+
+def spreadConditions(state):
+  if len(state.neutral_planets()) > 1:
+    return True
+  else:
+    return False
+
+def underAttackCheck(state):
+  if len(state.enemy_planets()) <= 1:
+        return False
+  return True #check has to be done again to reference planet obj so just check there only
+  enemys = iter(sorted(state.enemy_fleets(), key=lambda p: p.num_ships, reverse=True))
+  for fleet in enemys:
+    for planet in state.my_planets():
+      if fleet.destination_planet == planet.ID:
+        return True
+  return False
+
+def growing(state):
   growth = 0
   eGrowth = 0
   for planet in state.my_planets():
@@ -26,21 +46,3 @@ def blitzable(state):
     return True
   else:
     return False
-
-def spreadConditions(state):
-  #planets = state.neutral_planets()
-  if len(state.neutral_planets()) > 1:
-    return True
-  else:
-    return False
-
-def underAttackCheck(state):
-  enemys = iter(sorted(state.enemy_fleets(), key=lambda p: p.num_ships, reverse=True))
-
-  my_planets = state.my_planets()
-
-  for fleet in enemys:
-    for planet in my_planets:
-      if fleet.destination_planet == planet.ID:
-        return True
-  return False
