@@ -129,8 +129,8 @@ state.wooden_axe = {'agent': 0}
 state.made_wooden_axe = {'agent': False}
 
 # your code here 
-# pyhop.print_operators()
-# pyhop.print_methods()
+#pyhop.print_operators()
+#pyhop.print_methods()
 
 #pyhop.pyhop(state, [('have_enough', 'agent', 'wood', 1)], verbose=3)
 pyhop.pyhop(state, [('have_enough', 'agent', 'wood', 12)], verbose=3)

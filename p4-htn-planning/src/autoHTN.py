@@ -1,3 +1,4 @@
+from os import stat
 import pyhop
 import json
 
@@ -16,6 +17,7 @@ def produce (state, ID, item):
 pyhop.declare_methods ('produce', produce)
 
 def make_method (name, rule):
+	# Parses a given json recipe and returns a list of subtasks.
 	def method (state, ID):
 		# your code here
 		pass
@@ -32,14 +34,43 @@ def declare_methods (data):
 
 def make_operator (rule):
 	def operator (state, ID):
-		# your code here
-		pass
+		# Check to maks sure we have what's needed
+		if "Requires" in rule:
+			for r in rule["Requires"]:
+				if not state.r[ID] >= rule["Requires"][r]:
+					return False
+		
+		if "Consumes" in rule:
+			for c in rule["Consumes"]:
+				if not state.c[ID] >= rule["Consumes"][c]:
+					return False
+		
+		# Update the state of the game
+		if "Consumes" in rule:
+			for c in rule["Consumes"]:
+				state.c[ID] -= rule["Consumes"][c]
+				
+		if "Produces" in rule:
+			for p in rule["Produces"]:
+				state.p[id] += rule["Produces"][p]
+		
+		state.time[ID] -= rule["Time"]
+		return state
 	return operator
 
 def declare_operators (data):
 	# your code here
 	# hint: call make_operator, then declare the operator to pyhop using pyhop.declare_operators(o1, o2, ..., ok)
-	pass
+	operators = []
+	for name, value in sorted(data['Recipes'].items(), key=lambda item: item[1]["Time"], reverse=True):
+		name = name.replace(' ', '_')
+		operator_name = make_operator(value)
+		# operator_time = value['Time']
+		operator_name.__name__ = 'op_' + name
+		operators.append(operator_name)
+
+	for operator in operators: # for each operator in operators list
+		pyhop.declare_operators(operator)
 
 def add_heuristic (data, ID):
 	# prune search branch if heuristic() returns True
@@ -77,6 +108,7 @@ def set_up_goals (data, ID):
 if __name__ == '__main__':
 	rules_filename = 'crafting.json'
 
+	# Open and read the file
 	with open(rules_filename) as f:
 		data = json.load(f)
 
