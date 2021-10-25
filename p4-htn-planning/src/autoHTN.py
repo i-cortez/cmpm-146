@@ -1,4 +1,3 @@
-from os import stat
 import pyhop
 import json
 
@@ -17,60 +16,79 @@ def produce (state, ID, item):
 pyhop.declare_methods ('produce', produce)
 
 def make_method (name, rule):
-	# Parses a given json recipe and returns a list of subtasks.
 	def method (state, ID):
-		# your code here
-		pass
+		methods = []
 
+		if 'Requires' in rule:
+		  for item, num in rule['Requires'].items():
+			  methods.append(('have_enough', ID, item, num))
+
+		if 'Consumes' in rule:	
+		  for item, num in rule['Consumes'].items():
+			  methods.append(('have_enough', ID, item, num))
+
+		methods.append((('op_' + name), ID))
+		
+		return methods
+	method.__name__ = name.replace(" ", "_")
+	# print("New Method: " + method.__name__)
 	return method
 
-def declare_methods (data):
-	# some recipes are faster than others for the same product even though they might require extra tools
-	# sort the recipes so that faster recipes go first
 
-	# your code here
-	# hint: call make_method, then declare the method to pyhop using pyhop.declare_methods('foo', m1, m2, ..., mk)	
-	pass			
+def declare_methods(data):
+    # some recipes are faster than others for the same product even though they might require extra tools
+    # sort the recipes so that faster recipes go first
 
-def make_operator (rule):
+    # your code here
+    # hint: call make_method, then declare the method to pyhop using pyhop.declare_methods('foo', m1, m2, ..., mk)
+	methods = {}
+
+	# sort by time
+	for name, recipe in sorted(data['Recipes'].items(), key=lambda item: item[1]['Time'], reverse=False):
+		name = name.replace(' ', '_')
+		for product in recipe["Produces"].items():
+			new_method = {product: make_method(name,recipe)}
+			methods.update(new_method)
+
+	for product, method in methods.items():
+		pyhop.declare_methods('produce_' + product[0], method)	
+
+def make_operator(rule):
 	def operator (state, ID):
-		# Check to maks sure we have what's needed
-		if "Requires" in rule:
-			for r in rule["Requires"]:
-				if not state.r[ID] >= rule["Requires"][r]:
+		# your code here
+		if 'Requires' in rule:
+			for item, quantity in rule['Requires'].items():
+				if not getattr(state, item)[ID] >= quantity:
 					return False
-		
-		if "Consumes" in rule:
-			for c in rule["Consumes"]:
-				if not state.c[ID] >= rule["Consumes"][c]:
+		if 'Consumes' in rule:
+			for item, quantity in rule['Consumes'].items():
+				if getattr(state, item)[ID] >= quantity:
+					setattr(state, item, {ID: quantity - getattr(state, item)[ID]})
+				else:
 					return False
-		
-		# Update the state of the game
-		if "Consumes" in rule:
-			for c in rule["Consumes"]:
-				state.c[ID] -= rule["Consumes"][c]
-				
-		if "Produces" in rule:
-			for p in rule["Produces"]:
-				state.p[id] += rule["Produces"][p]
-		
-		state.time[ID] -= rule["Time"]
+		if 'Produces' in rule:
+				for item, quantity in rule['Produces'].items():
+					setattr(state, item, {ID: quantity - getattr(state, item)[ID]})
+		state.time[ID] -= rule['Time']
 		return state
 	return operator
 
-def declare_operators (data):
-	# your code here
-	# hint: call make_operator, then declare the operator to pyhop using pyhop.declare_operators(o1, o2, ..., ok)
-	operators = []
-	for name, value in sorted(data['Recipes'].items(), key=lambda item: item[1]["Time"], reverse=True):
-		name = name.replace(' ', '_')
-		operator_name = make_operator(value)
-		# operator_time = value['Time']
-		operator_name.__name__ = 'op_' + name
-		operators.append(operator_name)
 
-	for operator in operators: # for each operator in operators list
-		pyhop.declare_operators(operator)
+def declare_operators(data):
+    # your code here
+    # hint: call make_operator, then declare the operator to pyhop using pyhop.declare_operators(o1, o2, ..., ok)
+    operators = []
+
+    for name, rule in sorted(data['Recipes'].items(), key=lambda item: item[1]['Time'], reverse=False):
+        name = name.replace(' ', '_')
+        operator = make_operator(rule)
+        operator.__name__ = 'op_' + name
+        operators.append(operator)
+
+    for operator in operators:
+        pyhop.declare_operators(operator)
+
+    return
 
 def add_heuristic (data, ID):
 	# prune search branch if heuristic() returns True
@@ -108,11 +126,10 @@ def set_up_goals (data, ID):
 if __name__ == '__main__':
 	rules_filename = 'crafting.json'
 
-	# Open and read the file
 	with open(rules_filename) as f:
 		data = json.load(f)
 
-	state = set_up_state(data, 'agent', time=239) # allot time here
+	state = set_up_state(data, 'agent', time=300) # allot time here
 	goals = set_up_goals(data, 'agent')
 
 	declare_operators(data)
@@ -124,5 +141,13 @@ if __name__ == '__main__':
 
 	# Hint: verbose output can take a long time even if the solution is correct; 
 	# try verbose=1 if it is taking too long
-	pyhop.pyhop(state, goals, verbose=3)
+
+	# pyhop.pyhop(state, goals, verbose=3)
+
+	#a test
+	#pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=3)
+
+	#b test
+	pyhop.pyhop(state, [('have_enough', 'agent', 'wooden_pickaxe', 1)], verbose=1)
+
 	# pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
